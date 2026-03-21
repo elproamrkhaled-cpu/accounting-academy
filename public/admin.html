@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة التحكم | أكاديمية المحاسبة</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #050a30;
+            --accent: #c5a059;
+            --bg: #f4f7f6;
+        }
+        body { 
+            font-family: 'Cairo', sans-serif; 
+            background: var(--bg); 
+            margin: 0; 
+            padding: 20px; 
+        }
+        .container { 
+            max-width: 1100px; 
+            margin: 40px auto; 
+            background: white; 
+            padding: 30px; 
+            border-radius: 20px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1); 
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid var(--accent);
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        h1 { color: var(--primary); margin: 0; font-size: 1.8rem; }
+        .stats { font-weight: bold; color: var(--accent); }
+        
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 15px; text-align: right; border-bottom: 1px solid #eee; }
+        th { background: var(--primary); color: white; }
+        tr:hover { background: #fafafa; }
+        
+        .tag { 
+            padding: 5px 12px; 
+            border-radius: 15px; 
+            font-size: 0.75rem; 
+            background: #e8f5e9; 
+            color: #2e7d32; 
+            font-weight: bold; 
+        }
+        .loading { text-align: center; padding: 20px; color: #666; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h1>إدارة طلاب الأكاديمية 👨‍🎓</h1>
+            <div class="stats" id="count">إجمالي الطلاب: جاري التحميل...</div>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>الاسم الكامل</th>
+                    <th>البريد الإلكتروني</th>
+                    <th>تاريخ التسجيل</th>
+                    <th>الحالة</th>
+                </tr>
+            </thead>
+            <tbody id="res">
+                </tbody>
+        </table>
+        <div id="loader" class="loading">جاري جلب البيانات من السحابة...</div>
+    </div>
+
+    <script>
+        async function loadStudents() {
+            try {
+                // طلب البيانات من السيرفر العالمي
+                const response = await fetch('/api/admin/all-students');
+                if (!response.ok) throw new Error("فشل الاتصال بالسيرفر");
+
+                const students = await response.json();
+                
+                const tableBody = document.getElementById('res');
+                const loader = document.getElementById('loader');
+                const countText = document.getElementById('count');
+
+                loader.style.display = 'none';
+                countText.innerText = `إجمالي الطلاب: ${students.length}`;
+
+                if (students.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">لا يوجد طلاب مسجلين حالياً</td></tr>';
+                    return;
+                }
+
+                // رسم الجدول بالبيانات الحقيقية
+                tableBody.innerHTML = students.map(student => `
+                    <tr>
+                        <td style="font-weight:bold;">${student.name}</td>
+                        <td>${student.email}</td>
+                        <td>${new Date(student.createdAt).toLocaleDateString('ar-EG')}</td>
+                        <td><span class="tag">نشط</span></td>
+                    </tr>
+                `).join('');
+
+            } catch (error) {
+                console.error("Error:", error);
+                document.getElementById('loader').innerText = "❌ حدث خطأ أثناء جلب البيانات.";
+            }
+        }
+
+        // تشغيل الدالة فوراً
+        window.onload = loadStudents;
+    </script>
+</body>
+</html>
